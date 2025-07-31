@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adinkra Kwantuo - Enhanced Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #e8e8e8;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 1000px;
+            height: 750px;
+            max-width: 95vw;
+            max-height: 95vh;
+            background: linear-gradient(to bottom, #2c3e50 0%, #34495e 50%, #8b4513 100%);
+            border: 4px solid #2c3e50;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: rgba(44, 62, 80, 0.95);
+            color: #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 10;
+            flex-wrap: wrap;
+        }
+        
+        .ui-section {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .ui-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(52, 73, 94, 0.8);
+            border-radius: 8px;
+            border: 1px solid rgba(236, 240, 241, 0.2);
+        }
+        
+        #difficultyIndicator {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        #streakIndicator {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        #startScreen, #gameOverScreen, #modeSelectScreen, #puzzleScreen, #pauseScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(44, 62, 80, 0.95), rgba(52, 73, 94, 0.92));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 20;
+            text-align: center;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        #gameOverScreen, #modeSelectScreen, #puzzleScreen, #pauseScreen {
+            display: none;
+        }
+        
+        .title {
+            font-family: 'Orbitron', monospace;
+            font-size: 52px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #f39c12, #e67e22, #f39c12);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(243, 156, 18, 0.5);
+            margin-bottom: 25px;
+            letter-spacing: 4px;
+            animation: titleGlow 3s ease-in-out infinite;
+            position: relative;
+        }
+        
+        @keyframes titleGlow {
+            0%, 100% { 
+                background-position: 0% 50%;
+                text-shadow: 0 0 30px rgba(243, 156, 18, 0.5);
+            }
+            50% { 
+                background-position: 100% 50%;
+                text-shadow: 0 0 50px rgba(243, 156, 18, 0.8);
+            }
+        }
+        
+        .subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 22px;
+            margin-bottom: 30px;
+            color: #ecf0f1;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .btn {
+            font-family: 'Rajdhani', sans-serif;
+            padding: 18px 35px;
+            font-size: 18px;
+            font-weight: 600;
+            border: 2px solid transparent;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            cursor: pointer;
+            margin: 12px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+            min-width: 160px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(231, 76, 60, 0.6);
+            background: linear-gradient(45deg, #c0392b, #e74c3c);
+            border-color: rgba(255,255,255,0.3);
+        }
+        
+        .btn.secondary {
+            background: linear-gradient(45deg, #34495e, #2c3e50);
+        }
+        
+        .btn.secondary:hover {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+        }
+        
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 25px;
+            max-width: 800px;
+        }
+        
+        .mode-card {
+            background: linear-gradient(135deg, rgba(52, 73, 94, 0.9), rgba(44, 62, 80, 0.8));
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid #e74c3c;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #e74c3c);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .mode-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .mode-card:hover {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.3), rgba(243, 156, 18, 0.2));
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(231, 76, 60, 0.4);
+            border-color: #f39c12;
+        }
+        
+        .mode-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            color: #f39c12;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .mode-desc {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            color: #ecf0f1;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px;
+            max-width: 500px;
+        }
+        
+        .stat-item {
+            background: rgba(52, 73, 94, 0.8);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(236, 240, 241, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f39c12;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .achievement-popup {
+            position: absolute;
+            top: 120px;
+            right: 30px;
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: #2c3e50;
+            padding: 20px 25px;
+            border-radius: 15px;
+            font-weight: bold;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            transform: translateX(350px);
+            transition: transform 0.6s ease;
+            z-index: 30;
+            max-width: 300px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .achievement-popup.show {
+            transform: translateX(0);
+        }
+        
+        .menu-glow {
+            box-shadow: 0 0 20px rgba(243, 156, 18, 0.3);
+        }
+        
+        .menu-glow:hover {
+            box-shadow: 0 0 30px rgba(243, 156, 18, 0.5);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(39, 174, 96, 0.5);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(39, 174, 96, 0.8);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .title { font-size: 36px; }
+            .subtitle { font-size: 18px; }
+            .mode-grid { grid-template-columns: 1fr; }
+            #ui { font-size: 12px; }
+            .ui-section { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1000" height="750"></canvas>
+        
+        <div id="ui">
+            <div class="ui-section">
+                <div class="ui-item">Score: <span id="score">0</span></div>
+                <div class="ui-item">Symbols: <span id="symbols">0</span></div>
+                <div class="ui-item">Lives: <span id="lives">3</span></div>
+                <div class="ui-item" id="lifeProgress" style="display: none;">
+                    Life Progress: <span id="symbolsToLife">0</span>/5
+                </div>
+            </div>
+            <div class="ui-section">
+                <div id="difficultyIndicator">AI: Easy</div>
+                <div id="streakIndicator">Streak: <span id="streak">0</span></div>
+                <div class="ui-item">Level: <span id="level">1</span></div>
+            </div>
+        </div>
+        
+        <div id="startScreen">
+            <div class="title">ADINKRA KWANTUO</div>
+            <div class="subtitle">Advanced Ghanaian Heritage Experience - 2025</div>
+            <div style="margin: 20px 0; font-family: 'Rajdhani', sans-serif; font-size: 16px; color: #f39c12; font-weight: 600; letter-spacing: 1px;">
+                Created by: Bright K. Akowuah | Breezy ArtDrop Studios
+            </div>
+            
+            <div style="display: flex; gap: 40px; margin: 30px 0; max-width: 800px;">
+                <div style="flex: 1; text-align: left;">
+                    <h3 style="font-family: 'Orbitron', monospace; color: #e74c3c; margin-bottom: 15px; font-size: 18px;">🎯 MISSION</h3>
+                    <p style="font-family: 'Rajdhani', sans-serif; font-size: 15px; line-height: 1.6; color: #ecf0f1;">
+                        Master the sacred Adinkra symbols of Ghana and unlock their ancient wisdom through immersive gameplay.
+                    </p>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                    <h3 style="font-family: 'Orbitron', monospace; color: #e74c3c; margin-bottom: 15px; font-size: 18px;">🌟 FEATURES</h3>
+                    <p style="font-family: 'Rajdhani', sans-serif; font-size: 15px; line-height: 1.6; color: #ecf0f1;">
+                        Authentic cultural symbols, dynamic AI opponents, immersive sound design, and multiple adventure modes.
+                    </p>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <button class="btn menu-glow" onclick="showModeSelect()">SELECT ADVENTURE</button>
+                <button class="btn secondary menu-glow" onclick="showLeaderboard()">GLOBAL RANKINGS</button>
+            </div>
+            
+            <div style="background: rgba(44, 62, 80, 0.6); padding: 25px; border-radius: 15px; border: 1px solid rgba(231, 76, 60, 0.3); max-width: 700px;">
+                <h3 style="font-family: 'Orbitron', monospace; color: #f39c12; margin-bottom: 15px; font-size: 16px; text-align: center;">🎮 CONTROLS</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-family: 'Rajdhani', sans-serif; font-size: 14px;">
+                    <div>
+                        <strong style="color: #e74c3c;">Movement:</strong> ← → Arrow Keys<br>
+                        <strong style="color: #e74c3c;">Jump:</strong> SPACE or TAP<br>
+                        <strong style="color: #e74c3c;">Super Jump:</strong> ↑ or W<br>
+                        <strong style="color: #e74c3c;">Pause:</strong> ESC or P
+                    </div>
+                    <div>
+                        <strong style="color: #e74c3c;">Collect:</strong> Adinkra Symbols<br>
+                        <strong style="color: #e74c3c;">Avoid:</strong> Obstacles<br>
+                        <strong style="color: #e74c3c;">Life Bonus:</strong> Every 5 symbols<br>
+                        <strong style="color: #e74c3c;">Goal:</strong> High Score
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="modeSelectScreen">
+            <div class="title">SELECT YOUR ADVENTURE</div>
+            <div class="mode-grid">
+                <div class="mode-card" onclick="startGame('classic')">
+                    <div class="mode-title">🏃‍♂️ Classic Quest</div>
+                    <div class="mode-desc">Traditional endless runner with authentic Adinkra symbols and enhanced sound design</div>
+                </div>
+                <div class="mode-card" onclick="startGame('competitive')">
+                    <div class="mode-title">🏆 Competitive Race</div>
+                    <div class="mode-desc">Race against sophisticated AI opponents with dynamic difficulty and cultural rewards</div>
+                </div>
+                <div class="mode-card" onclick="startGame('puzzle')">
+                    <div class="mode-title">🧩 Puzzle Challenge</div>
+                    <div class="mode-desc">Solve complex Adinkra symbol puzzles with authentic cultural context and meanings</div>
+                </div>
+                <div class="mode-card" onclick="startGame('festival')">
+                    <div class="mode-title">🎉 Festival Mode</div>
+                    <div class="mode-desc">Special cultural celebration with enhanced rewards and unique ceremonial sounds</div>
+                </div>
+                <div class="mode-card" onclick="startGame('survival')">
+                    <div class="mode-title">💀 Survival Mode</div>
+                    <div class="mode-desc">Extreme challenge with one life, maximum difficulty, and prestige cultural rewards</div>
+                </div>
+                <div class="mode-card" onclick="startGame('story')">
+                    <div class="mode-title">📖 Story Mode</div>
+                    <div class="mode-desc">Narrative-driven experience with authentic Akan cultural storytelling</div>
+                </div>
+            </div>
+            <button class="btn secondary" onclick="backToStart()">Return to Main Menu</button>
+        </div>
+        
+        <div id="pauseScreen">
+            <div class="title">GAME PAUSED</div>
+            <div class="subtitle">Take a moment to rest, warrior</div>
+            <div style="margin: 30px 0;">
+                <button class="btn" onclick="resumeGame()">CONTINUE QUEST</button>
+                <button class="btn secondary" onclick="backToStart()">MAIN MENU</button>
+            </div>
+            <div style="background: rgba(44, 62, 80, 0.6); padding: 20px; border-radius: 15px; border: 1px solid rgba(231, 76, 60, 0.3); max-width: 500px;">
+                <h3 style="font-family: 'Orbitron', monospace; color: #f39c12; margin-bottom: 15px; font-size: 16px; text-align: center;">🎮 PAUSE CONTROLS</h3>
+                <div style="font-family: 'Rajdhani', sans-serif; font-size: 14px; text-align: center;">
+                    <strong style="color: #e74c3c;">Pause:</strong> ESC or P key<br>
+                    <strong style="color: #e74c3c;">Resume:</strong> ESC, P, or SPACE
+                </div>
+            </div>
+        </div>
+        
+        <div id="gameOverScreen">
+            <div class="title">Quest Complete</div>
+            <div class="subtitle" id="gameOverSubtitle">Your journey through Ghana has concluded</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="finalScore">0</div>
+                    <div class="stat-label">Final Score</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="finalSymbols">0</div>
+                    <div class="stat-label">Symbols Collected</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="maxStreak">0</div>
+                    <div class="stat-label">Max Streak</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="finalDifficulty">Easy</div>
+                    <div class="stat-label">AI Difficulty</div>
+                </div>
+            </div>
+            <div>
+                <button class="btn" onclick="restartGame()">New Quest</button>
+                <button class="btn secondary" onclick="backToStart()">Change Mode</button>
+            </div>
+        </div>
+        
+        <div id="achievementPopup" class="achievement-popup">
+            <div id="achievementText"></div>
+        </div>
+    </div>
+
+    <script>
+        // Audio context and sound effects
+        let audioContext;
+        let sounds = {};
+        
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                createSounds();
+            } catch (error) {
+                console.log('Audio not supported');
+            }
+        }
+        
+        function createSounds() {
+            sounds.jump = createBeep(200, 0.1, 'sine');
+            sounds.collect = createChime([330, 415, 523], 0.3);
+            sounds.achievement = createChime([523, 659, 784, 1047], 0.5);
+            sounds.gameOver = createBeep(150, 0.8, 'sawtooth');
+        }
+        
+        function createBeep(frequency, duration, waveType = 'sine') {
+            return () => {
+                if (!audioContext) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = waveType;
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration);
+            };
+        }
+        
+        function createChime(frequencies, duration) {
+            return () => {
+                if (!audioContext) return;
+                
+                frequencies.forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                        
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + duration);
+                    }, index * 100);
+                });
+            };
+        }
+        
+        function playSound(soundName) {
+            if (sounds[soundName]) {
+                sounds[soundName]();
+            }
+        }
+        
+        // Game state and configuration
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            running: false,
+            paused: false,
+            mode: 'classic',
+            score: 0,
+            symbols: 0,
+            lives: 3,
+            level: 1,
+            streak: 0,
+            maxStreak: 0,
+            gameSpeed: 2,
+            aiDifficulty: 'Easy',
+            lastObstacleTime: 0,
+            lastSymbolTime: 0,
+            lastDifficultyAdjust: 0,
+            symbolsForLife: 0
+        };
+        
+        const player = {
+            x: 100,
+            y: 400,
+            width: 40,
+            height: 40,
+            velocityY: 0,
+            jumping: false,
+            grounded: true,
+            powerUp: null,
+            powerUpTime: 0,
+            jumpPower: -16
+        };
+        
+        const adinkraTypes = [
+            { symbol: '◉', name: 'Adinkrahene', meaning: 'Chief of Adinkra symbols', points: 200, rarity: 'legendary' },
+            { symbol: '⚔', name: 'Akoben', meaning: 'War Horn - Vigilance', points: 130, rarity: 'rare' },
+            { symbol: '◊', name: 'Akokonan', meaning: 'The leg of a hen - Mercy', points: 110, rarity: 'uncommon' },
+            { symbol: '♥', name: 'Akoma', meaning: 'The heart - Patience', points: 100, rarity: 'common' },
+            { symbol: '♡', name: 'Akoma Ntoso', meaning: 'Linked hearts - Unity', points: 120, rarity: 'uncommon' },
+            { symbol: '◈', name: 'Denkyem', meaning: 'Crocodile - Adaptability', points: 115, rarity: 'uncommon' },
+            { symbol: '⚡', name: 'Nyame Dua', meaning: 'Tree of God - Protection', points: 150, rarity: 'rare' },
+            { symbol: '◉', name: 'Gye Nyame', meaning: 'Except for God - Supremacy', points: 180, rarity: 'legendary' },
+            { symbol: '◈', name: 'Sankofa', meaning: 'Go back and get it - Learn from past', points: 140, rarity: 'rare' }
+        ];
+        
+        let obstacles = [];
+        let adinkraSymbols = [];
+        let backgroundElements = [];
+        let particles = [];
+        
+        let keys = {};
+        let touchStartTime = 0;
+        let lastJumpTime = 0;
+        
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            
+            if (e.code === 'Escape' || e.code === 'KeyP') {
+                e.preventDefault();
+                if (gameState.running && !gameState.paused) {
+                    pauseGame();
+                } else if (gameState.running && gameState.paused) {
+                    resumeGame();
+                }
+                return;
+            }
+            
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (gameState.paused) {
+                    resumeGame();
+                } else {
+                    jump();
+                }
+            }
+            if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                e.preventDefault();
+                if (!gameState.paused) {
+                    superJump();
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+        
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchStartTime = Date.now();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            
+            if (x < canvas.width / 3) {
+                keys['ArrowLeft'] = true;
+            } else if (x > (canvas.width * 2) / 3) {
+                keys['ArrowRight'] = true;
+            } else {
+                jump();
+            }
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            keys['ArrowLeft'] = false;
+            keys['ArrowRight'] = false;
+        });
+        
+        function jump() {
+            const currentTime = Date.now();
+            if (currentTime - lastJumpTime < 300) return;
+            
+            if (player.grounded && gameState.running) {
+                player.velocityY = player.jumpPower;
+                player.jumping = true;
+                player.grounded = false;
+                lastJumpTime = currentTime;
+                playSound('jump');
+            }
+        }
+        
+        function superJump() {
+            const currentTime = Date.now();
+            if (currentTime - lastJumpTime < 300) return;
+            
+            if (player.grounded && gameState.running) {
+                player.velocityY = player.jumpPower * 1.8;
+                player.jumping = true;
+                player.grounded = false;
+                lastJumpTime = currentTime;
+                playSound('achievement');
+                createParticles(player.x + player.width/2, player.y + player.height, '#f39c12', 'rare');
+                showAchievement("Super Jump! 🚀");
+            }
+        }
+        
+        function initBackground() {
+            backgroundElements = [];
+            for (let i = 0; i < 15; i++) {
+                backgroundElements.push({
+                    x: Math.random() * canvas.width * 3,
+                    y: Math.random() * 200 + 50,
+                    type: ['tree', 'mountain', 'village', 'market'][Math.floor(Math.random() * 4)],
+                    speed: Math.random() * 0.5 + 0.2,
+                    color: ['#27ae60', '#8b7355', '#e74c3c', '#f39c12'][Math.floor(Math.random() * 4)]
+                });
+            }
+        }
+        
+        function updatePlayer() {
+            if (keys['ArrowLeft'] && player.x > 0) {
+                player.x -= 5;
+            }
+            if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
+                player.x += 5;
+            }
+            
+            player.velocityY += 0.8;
+            player.y += player.velocityY;
+            
+            const groundY = 650;
+            if (player.y >= groundY - player.height) {
+                player.y = groundY - player.height;
+                player.velocityY = 0;
+                player.jumping = false;
+                player.grounded = true;
+            }
+        }
+        
+        function spawnObstacle(currentTime) {
+            if (currentTime - gameState.lastObstacleTime > 2000 + Math.random() * 1000) {
+                const obstacleTypes = ['rock', 'tree', 'market_stall'];
+                const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+                
+                obstacles.push({
+                    x: canvas.width,
+                    y: 620,
+                    width: type === 'market_stall' ? 50 : 30,
+                    height: type === 'market_stall' ? 30 : 30,
+                    type: type
+                });
+                gameState.lastObstacleTime = currentTime;
+            }
+        }
+        
+        function spawnSymbol(currentTime) {
+            if (currentTime - gameState.lastSymbolTime > 1200 + Math.random() * 800) {
+                const symbolType = adinkraTypes[Math.floor(Math.random() * adinkraTypes.length)];
+                const isHighSymbol = Math.random() > 0.6;
+                const symbolY = isHighSymbol ? 
+                    Math.random() * 200 + 80 :
+                    Math.random() * 300 + 200;
+                
+                adinkraSymbols.push({
+                    x: canvas.width,
+                    y: symbolY,
+                    width: 30,
+                    height: 30,
+                    symbol: symbolType.symbol,
+                    name: symbolType.name,
+                    meaning: symbolType.meaning,
+                    points: symbolType.points,
+                    rarity: symbolType.rarity,
+                    collected: false,
+                    glowPhase: 0,
+                    isHigh: isHighSymbol
+                });
+                gameState.lastSymbolTime = currentTime;
+            }
+        }
+        
+        function updateObstacles() {
+            obstacles = obstacles.filter(obstacle => {
+                obstacle.x -= gameState.gameSpeed;
+                return obstacle.x > -obstacle.width;
+            });
+        }
+        
+        function updateSymbols() {
+            adinkraSymbols = adinkraSymbols.filter(symbol => {
+                symbol.x -= gameState.gameSpeed;
+                symbol.glowPhase += 0.1;
+                return symbol.x > -symbol.width;
+            });
+        }
+        
+        function checkCollisions() {
+            obstacles.forEach(obstacle => {
+                if (player.x < obstacle.x + obstacle.width &&
+                    player.x + player.width > obstacle.x &&
+                    player.y < obstacle.y + obstacle.height &&
+                    player.y + player.height > obstacle.y) {
+                    
+                    gameState.lives--;
+                    gameState.streak = 0;
+                    obstacle.x = -100;
+                    
+                    if (gameState.lives <= 0) {
+                        gameOver();
+                    }
+                }
+            });
+            
+            adinkraSymbols.forEach(symbol => {
+                if (!symbol.collected &&
+                    player.x < symbol.x + symbol.width &&
+                    player.x + player.width > symbol.x &&
+                    player.y < symbol.y + symbol.height &&
+                    player.y + player.height > symbol.y) {
+                    
+                    symbol.collected = true;
+                    gameState.symbols++;
+                    gameState.symbolsForLife++;
+                    gameState.score += symbol.points;
+                    gameState.streak++;
+                    
+                    if (gameState.streak > gameState.maxStreak) {
+                        gameState.maxStreak = gameState.streak;
+                    }
+                    
+                    symbol.x = -100;
+                    playSound('collect');
+                    createParticles(symbol.x, symbol.y, '#e74c3c', symbol.rarity);
+                    
+                    if (gameState.symbolsForLife >= 5) {
+                        gameState.lives++;
+                        gameState.symbolsForLife = 0;
+                        showAchievement("🌟 +1 LIFE BONUS! 🌟");
+                        playSound('achievement');
+                    }
+                    
+                    if (gameState.streak % 5 === 0) {
+                        showAchievement(`${gameState.streak} Symbol Streak!`);
+                        gameState.score += gameState.streak * 10;
+                        playSound('achievement');
+                    }
+                    
+                    if (Math.random() > 0.6) {
+                        showAchievement(`${symbol.name}: ${symbol.meaning}`);
+                    }
+                }
+            });
+        }
+        
+        function createParticles(x, y, color, rarity = 'common') {
+            const particleCount = rarity === 'legendary' ? 25 : rarity === 'rare' ? 15 : 10;
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    color: color,
+                    life: 1.0,
+                    decay: 0.015,
+                    size: Math.random() * 5 + 2,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+        
+        function updateParticles() {
+            particles = particles.filter(particle => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life -= particle.decay;
+                particle.twinkle += 0.2;
+                return particle.life > 0;
+            });
+        }
+        
+        function drawParticles() {
+            particles.forEach(particle => {
+                ctx.save();
+                const alpha = particle.life * (0.5 + 0.5 * Math.sin(particle.twinkle));
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = particle.color;
+                ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+                ctx.restore();
+            });
+        }
+        
+        function drawBackground() {
+            let skyColors = ['#2c3e50', '#34495e', '#8b4513'];
+            if (gameState.mode === 'festival') {
+                skyColors = ['#e74c3c', '#f39c12', '#e67e22'];
+            }
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, skyColors[0]);
+            gradient.addColorStop(0.4, skyColors[1]);
+            gradient.addColorStop(1, skyColors[2]);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            backgroundElements.forEach(element => {
+                element.x -= element.speed;
+                if (element.x < -100) {
+                    element.x = canvas.width + Math.random() * 200;
+                }
+                
+                ctx.fillStyle = element.color;
+                drawBackgroundElement(element);
+            });
+            
+            const groundY = 650;
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+            
+            for (let i = 0; i < canvas.width; i += 40) {
+                const colors = ['#e74c3c', '#f39c12', '#e67e22', '#27ae60'];
+                ctx.fillStyle = colors[Math.floor(i / 40) % colors.length];
+                ctx.fillRect(i, groundY, 40, 20);
+                
+                ctx.fillStyle = '#2c3e50';
+                for (let j = 0; j < 4; j++) {
+                    ctx.fillRect(i + j * 10 + 2, groundY + 2, 6, 3);
+                    ctx.fillRect(i + j * 10 + 2, groundY + 10, 6, 3);
+                    ctx.fillRect(i + j * 10 + 2, groundY + 15, 6, 3);
+                }
+            }
+        }
+        
+        function drawBackgroundElement(element) {
+            switch (element.type) {
+                case 'tree':
+                    ctx.fillRect(element.x, element.y + 30, 15, 50);
+                    ctx.beginPath();
+                    ctx.arc(element.x + 7.5, element.y + 20, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case 'mountain':
+                    ctx.beginPath();
+                    ctx.moveTo(element.x, element.y + 60);
+                    ctx.lineTo(element.x + 30, element.y);
+                    ctx.lineTo(element.x + 60, element.y + 60);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+                case 'village':
+                    ctx.fillRect(element.x, element.y + 20, 40, 30);
+                    ctx.fillStyle = '#8b4513';
+                    ctx.beginPath();
+                    ctx.arc(element.x + 20, element.y + 20, 20, 0, Math.PI);
+                    ctx.fill();
+                    ctx.fillStyle = element.color;
+                    break;
+                case 'market':
+                    ctx.fillRect(element.x, element.y + 10, 50, 20);
+                    ctx.fillStyle = '#e74c3c';
+                    ctx.fillRect(element.x + 5, element.y + 15, 40, 10);
+                    ctx.fillStyle = element.color;
+                    break;
+            }
+        }
+        
+        function drawPlayer() {
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            const patterns = ['#e74c3c', '#f39c12', '#e67e22', '#27ae60'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = patterns[i];
+                ctx.fillRect(player.x + 6, player.y + 10 + i * 5, player.width - 12, 4);
+                
+                ctx.fillStyle = '#2c3e50';
+                for (let j = 0; j < 3; j++) {
+                    ctx.fillRect(player.x + 8 + j * 10, player.y + 11 + i * 5, 2, 2);
+                }
+            }
+            
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(player.x + 8, player.y + 3, 24, 18);
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(player.x + 12, player.y + 8, 5, 4);
+            ctx.fillRect(player.x + 23, player.y + 8, 5, 4);
+            
+            ctx.fillStyle = 'black';
+            ctx.fillRect(player.x + 14, player.y + 9, 2, 2);
+            ctx.fillRect(player.x + 25, player.y + 9, 2, 2);
+            
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(player.x + 3, player.y - 8, 34, 12);
+            ctx.fillStyle = '#f39c12';
+            ctx.fillRect(player.x + 6, player.y - 5, 28, 3);
+        }
+        
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                switch (obstacle.type) {
+                    case 'rock':
+                        ctx.fillStyle = '#7f8c8d';
+                        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                        ctx.fillStyle = '#95a5a6';
+                        ctx.fillRect(obstacle.x + 5, obstacle.y + 5, 20, 20);
+                        break;
+                    case 'tree':
+                        ctx.fillStyle = '#8b4513';
+                        ctx.fillRect(obstacle.x + 10, obstacle.y, 10, obstacle.height);
+                        ctx.fillStyle = '#27ae60';
+                        ctx.beginPath();
+                        ctx.arc(obstacle.x + 15, obstacle.y, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'market_stall':
+                        ctx.fillStyle = '#e74c3c';
+                        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                        ctx.fillStyle = '#f39c12';
+                        ctx.fillRect(obstacle.x + 5, obstacle.y + 5, obstacle.width - 10, 10);
+                        break;
+                }
+            });
+        }
+        
+        function drawSymbols() {
+            adinkraSymbols.forEach(symbol => {
+                if (!symbol.collected) {
+                    const glowColor = '#e74c3c';
+                    
+                    ctx.shadowColor = glowColor;
+                    ctx.shadowBlur = 15;
+                    
+                    if (symbol.isHigh) {
+                        ctx.strokeStyle = '#FFD700';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 5]);
+                        ctx.beginPath();
+                        ctx.arc(symbol.x + symbol.width/2, symbol.y + symbol.height/2, 25, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        ctx.fillStyle = '#FFD700';
+                        ctx.font = 'bold 16px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('↑', symbol.x + symbol.width/2, symbol.y - 10);
+                    }
+                    
+                    ctx.font = 'bold 32px Arial Unicode MS, Segoe UI Symbol, Arial';
+                    ctx.fillStyle = glowColor;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(symbol.symbol, symbol.x + symbol.width/2, symbol.y + symbol.height/2);
+                    
+                    if (symbol.rarity === 'legendary') {
+                        ctx.strokeStyle = '#FFD700';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(symbol.x + symbol.width/2, symbol.y + symbol.height/2, 20, 0, Math.PI * 2);
+                        ctx.stroke();
+                    } else if (symbol.rarity === 'rare') {
+                        ctx.strokeStyle = '#9B59B6';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(symbol.x + symbol.width/2, symbol.y + symbol.height/2, 18, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    
+                    if (Math.abs(symbol.x - player.x) < 60) {
+                        ctx.font = '12px Arial';
+                        ctx.fillStyle = 'white';
+                        ctx.shadowBlur = 5;
+                        ctx.fillText(symbol.name, symbol.x + symbol.width/2, symbol.y - 15);
+                        ctx.font = '10px Arial';
+                        ctx.fillText(symbol.meaning, symbol.x + symbol.width/2, symbol.y - 5);
+                        
+                        if (symbol.isHigh) {
+                            ctx.font = '9px Arial';
+                            ctx.fillStyle = '#FFD700';
+                            ctx.fillText('Press ↑ or W for Super Jump!', symbol.x + symbol.width/2, symbol.y + 50);
+                        }
+                    }
+                    
+                    ctx.shadowBlur = 0;
+                }
+            });
+        }
+        
+        function showModeSelect() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('modeSelectScreen').style.display = 'flex';
+        }
+        
+        function backToStart() {
+            document.getElementById('modeSelectScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('pauseScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+        }
+        
+        function showLeaderboard() {
+            // Demo leaderboard for preview
+            showAchievement("Leaderboard feature available in full game!");
+        }
+        
+        function showAchievement(text) {
+            const popup = document.getElementById('achievementPopup');
+            document.getElementById('achievementText').textContent = text;
+            popup.classList.add('show');
+            
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 3500);
+        }
+        
+        function gameLoop(currentTime) {
+            if (!gameState.running) return;
+            
+            if (gameState.paused) {
+                drawBackground();
+                drawPlayer();
+                drawObstacles();
+                drawSymbols();
+                drawParticles();
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 48px Orbitron, monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2 - 50);
+                
+                ctx.font = '24px Rajdhani, sans-serif';
+                ctx.fillText('Press ESC, P, or SPACE to continue', canvas.width / 2, canvas.height / 2 + 20);
+                
+                return;
+            }
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            updatePlayer();
+            spawnObstacle(currentTime);
+            spawnSymbol(currentTime);
+            updateObstacles();
+            updateSymbols();
+            updateParticles();
+            checkCollisions();
+            
+            gameState.score += Math.floor(gameState.gameSpeed);
+            gameState.level = Math.floor(gameState.score / 2000) + 1;
+            
+            drawBackground();
+            drawPlayer();
+            drawObstacles();
+            drawSymbols();
+            drawParticles();
+            
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('symbols').textContent = gameState.symbols;
+            document.getElementById('lives').textContent = gameState.lives;
+            document.getElementById('streak').textContent = gameState.streak;
+            document.getElementById('level').textContent = gameState.level;
+            
+            const lifeProgress = document.getElementById('lifeProgress');
+            const symbolsToLife = document.getElementById('symbolsToLife');
+            
+            if (gameState.symbolsForLife > 0) {
+                lifeProgress.style.display = 'flex';
+                symbolsToLife.textContent = gameState.symbolsForLife;
+                
+                if (gameState.symbolsForLife >= 4) {
+                    lifeProgress.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+                    lifeProgress.style.animation = 'pulse 1s infinite';
+                } else {
+                    lifeProgress.style.background = 'rgba(52, 73, 94, 0.8)';
+                    lifeProgress.style.animation = 'none';
+                }
+            } else {
+                lifeProgress.style.display = 'none';
+            }
+        }
+        
+        function startGame(mode = 'classic') {
+            if (!audioContext) {
+                initAudio();
+            }
+            
+            gameState = {
+                running: true,
+                paused: false,
+                mode: mode,
+                score: 0,
+                symbols: 0,
+                lives: mode === 'survival' ? 1 : 3,
+                level: 1,
+                streak: 0,
+                maxStreak: 0,
+                gameSpeed: mode === 'festival' ? 1.5 : 2,
+                aiDifficulty: 'Easy',
+                lastObstacleTime: 0,
+                lastSymbolTime: 0,
+                lastDifficultyAdjust: 0,
+                symbolsForLife: 0
+            };
+            
+            player.x = 100;
+            player.y = 615;
+            player.velocityY = 0;
+            player.grounded = true;
+            player.powerUp = null;
+            player.jumpPower = -16;
+            
+            obstacles = [];
+            adinkraSymbols = [];
+            particles = [];
+            initBackground();
+            
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('modeSelectScreen').style.display = 'none';
+            document.getElementById('pauseScreen').style.display = 'none';
+            
+            showAchievement(`${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode Started!`);
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function gameOver() {
+            gameState.running = false;
+            playSound('gameOver');
+            
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('finalSymbols').textContent = gameState.symbols;
+            document.getElementById('maxStreak').textContent = gameState.maxStreak;
+            document.getElementById('finalDifficulty').textContent = gameState.aiDifficulty;
+            
+            const subtitle = document.getElementById('gameOverSubtitle');
+            switch (gameState.mode) {
+                case 'competitive':
+                    subtitle.textContent = 'The race is over! Check your ranking.';
+                    break;
+                case 'festival':
+                    subtitle.textContent = 'The festival celebration ends!';
+                    break;
+                case 'survival':
+                    subtitle.textContent = 'You survived as long as you could!';
+                    break;
+                default:
+                    subtitle.textContent = 'Your journey through Ghana has concluded';
+            }
+            
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+        
+        function pauseGame() {
+            if (gameState.running && !gameState.paused) {
+                gameState.paused = true;
+                document.getElementById('pauseScreen').style.display = 'flex';
+                playSound('collect');
+            }
+        }
+        
+        function resumeGame() {
+            if (gameState.running && gameState.paused) {
+                gameState.paused = false;
+                document.getElementById('pauseScreen').style.display = 'none';
+                playSound('collect');
+                requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        function restartGame() {
+            startGame(gameState.mode);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initBackground();
+            
+            document.addEventListener('click', () => {
+                if (!audioContext) {
+                    initAudio();
+                }
+            }, { once: true });
+            
+            document.addEventListener('touchstart', () => {
+                if (!audioContext) {
+                    initAudio();
+                }
+            }, { once: true });
+        });
+        
+        if (document.readyState === 'loading') {
+        } else {
+            initBackground();
+        }
+    </script>
+</body>
+</html>
